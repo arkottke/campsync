@@ -1,0 +1,27 @@
+services:
+  campsync:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        POCKETBASE_VERSION: 0.36.8
+    container_name: campsync
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+      - "8090:8090"
+    environment:
+      - NODE_ENV=production
+      - VITE_PB_URL=http://localhost:8090
+      - PB_ADMIN_EMAIL=${PB_ADMIN_EMAIL}
+      - PB_ADMIN_PASSWORD=${PB_ADMIN_PASSWORD}
+      - PB_USER_EMAIL=${PB_USER_EMAIL}
+      - PB_USER_PASSWORD=${PB_USER_PASSWORD}
+      - PB_USER_NAME=${PB_USER_NAME:-User}
+    volumes:
+      - ./pb_data:/app/pb_data
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
