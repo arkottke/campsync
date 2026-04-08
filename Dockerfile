@@ -11,6 +11,10 @@ RUN npm ci --legacy-peer-deps
 
 # Copy source code
 COPY . .
+# Vite env vars are compiled into the frontend at build time.
+ARG VITE_PB_URL=http://localhost:8090
+ENV VITE_PB_URL=${VITE_PB_URL}
+
 
 # Build the application
 RUN npm run build
