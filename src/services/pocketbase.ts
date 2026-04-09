@@ -39,6 +39,7 @@ export class PocketBaseService {
   ) {
     const userData = {
       email,
+      emailVisibility: true,
       password,
       passwordConfirm,
       name,
@@ -88,8 +89,7 @@ export class PocketBaseService {
 
   // Admin user management
   static async listUsers(): Promise<User[]> {
-    const records = await pb.collection('users').getFullList({ sort: 'name' })
-    return records.map(r => ({
+    const mapUser = (r: any): User => ({
       id: r.id,
       email: r.email || '',
       name: r.name || r.email || '',
@@ -97,12 +97,31 @@ export class PocketBaseService {
       avatar: r.avatar,
       created: r.created,
       updated: r.updated,
-    }))
+    })
+
+    const records = await pb.collection('users').getFullList({ sort: 'name' })
+
+    // Auth emails are hidden when emailVisibility is false.
+    // If the admin can update the record, flip visibility and reload once.
+    const hiddenIds = records.filter(r => !r.email).map(r => r.id)
+    if (hiddenIds.length) {
+      await Promise.all(
+        hiddenIds.map(id =>
+          pb.collection('users').update(id, { emailVisibility: true }).catch(() => null)
+        )
+      )
+
+      const refreshed = await pb.collection('users').getFullList({ sort: 'name' })
+      return refreshed.map(mapUser)
+    }
+
+    return records.map(mapUser)
   }
 
   static async createUser(email: string, password: string, name: string, isAdmin = false) {
     return await pb.collection('users').create({
       email,
+      emailVisibility: true,
       password,
       passwordConfirm: password,
       name,
