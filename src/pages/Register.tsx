@@ -19,9 +19,14 @@ export default function Register() {
       return
     }
 
+    if (!name.trim()) {
+      setError('Display name is required')
+      return
+    }
+
     setLoading(true)
     try {
-      await register(email, password, passwordConfirm, name)
+      await register(password, passwordConfirm, name, email || undefined)
     } catch (err) {
       const pbErr = err as { response?: { data?: Record<string, { message: string }> }; message?: string }
       if (pbErr.response?.data) {
@@ -34,6 +39,8 @@ export default function Register() {
       setLoading(false)
     }
   }
+
+  const derivedUsername = name.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '')
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-camp-50 to-camp-100 flex items-center justify-center px-4">
@@ -53,7 +60,7 @@ export default function Register() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-camp-900 mb-1">
-                Display Name
+                Display Name <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -63,17 +70,21 @@ export default function Register() {
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-camp-500 focus:border-transparent"
                 placeholder="Your name"
               />
+              {name.trim() && (
+                <p className="text-xs text-camp-500 mt-1">
+                  Your login username will be: <span className="font-medium">{derivedUsername}</span>
+                </p>
+              )}
             </div>
 
             <div>
               <label className="block text-sm font-medium text-camp-900 mb-1">
-                Email
+                Email <span className="text-camp-400 text-xs">(optional)</span>
               </label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                required
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-camp-500 focus:border-transparent"
                 placeholder="your@email.com"
               />
@@ -81,7 +92,7 @@ export default function Register() {
 
             <div>
               <label className="block text-sm font-medium text-camp-900 mb-1">
-                Password
+                Password <span className="text-red-500">*</span>
               </label>
               <input
                 type="password"
@@ -95,7 +106,7 @@ export default function Register() {
 
             <div>
               <label className="block text-sm font-medium text-camp-900 mb-1">
-                Confirm Password
+                Confirm Password <span className="text-red-500">*</span>
               </label>
               <input
                 type="password"

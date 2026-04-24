@@ -2,6 +2,7 @@
 export interface User {
   id: string
   email: string
+  username?: string
   name: string
   is_admin?: boolean
   avatar?: string
@@ -10,6 +11,8 @@ export interface User {
 }
 
 // Recipe types
+export type GroceryCategory = 'Produce' | 'Dairy' | 'Meat' | 'Frozen' | 'Beverages' | 'Pantry' | 'Bakery' | 'Condiments' | 'Snacks' | 'Other'
+
 export interface Ingredient {
   id: string
   recipe_id: string
@@ -17,6 +20,7 @@ export interface Ingredient {
   quantity: number
   unit: string
   storage_type: 'Cooler' | 'Dry Box' | 'Trailer Bin' | 'Gear'
+  grocery_category?: GroceryCategory
   optional?: boolean
 }
 
@@ -61,6 +65,7 @@ export interface ChecklistItem {
   quantity: number
   unit: string
   storage_type: 'Cooler' | 'Dry Box' | 'Trailer Bin' | 'Gear'
+  grocery_category?: GroceryCategory
   checked: boolean
   checked_by?: string
   is_grocery: boolean

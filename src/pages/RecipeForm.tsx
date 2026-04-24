@@ -4,7 +4,8 @@ import { useAuth } from '../context/AuthContext'
 import { useRecipe, useCreateRecipe, useUpdateRecipe, useAllIngredients } from '../hooks/useQueries'
 import { useFormKeyboardNav } from '../hooks/useFormKeyboardNav'
 import { PocketBaseService } from '../services/pocketbase'
-import { Ingredient, Recipe } from '../types'
+import { GroceryCategory, Ingredient, Recipe } from '../types'
+import { getGroceryCategory, GROCERY_CATEGORIES } from '../utils/aggregator'
 
 type IngredientRow = {
   id?: string
@@ -12,6 +13,7 @@ type IngredientRow = {
   quantity: number
   unit: string
   storage_type: 'Cooler' | 'Dry Box' | 'Trailer Bin' | 'Gear'
+  grocery_category: GroceryCategory
   optional: boolean
 }
 
@@ -19,7 +21,7 @@ const storageTypes: IngredientRow['storage_type'][] = ['Cooler', 'Dry Box', 'Tra
 const categoryOptions: Recipe['category'][] = ['Breakfast', 'Lunch', 'Dinner', 'Snack']
 
 function emptyIngredient(): IngredientRow {
-  return { item_name: '', quantity: 1, unit: '', storage_type: 'Dry Box', optional: false }
+  return { item_name: '', quantity: 1, unit: '', storage_type: 'Dry Box', grocery_category: 'Other', optional: false }
 }
 
 export default function RecipeForm() {
@@ -46,8 +48,8 @@ export default function RecipeForm() {
   const { data: allIngredientsRaw } = useAllIngredients()
   // Build a de-duplicated map of lowercase name -> canonical display name + defaults
   const allIngredientDefaults = useMemo(() => {
-    const map = new Map<string, { label: string; unit: string; storage_type: IngredientRow['storage_type'] }>()
-    for (const ing of (allIngredientsRaw ?? []) as Array<{ item_name: string; unit: string; storage_type: IngredientRow['storage_type'] }>) {
+    const map = new Map<string, { label: string; unit: string; storage_type: IngredientRow['storage_type']; grocery_category?: GroceryCategory }>()
+    for (const ing of (allIngredientsRaw ?? []) as Array<{ item_name: string; unit: string; storage_type: IngredientRow['storage_type']; grocery_category?: GroceryCategory }>) {
       const key = ing.item_name.toLowerCase().trim()
       const label = ing.item_name.trim()
       const unit = ing.unit?.trim() ?? ''
@@ -55,13 +57,16 @@ export default function RecipeForm() {
 
       const existing = map.get(key)
       if (!existing) {
-        map.set(key, { label, unit, storage_type: ing.storage_type })
+        map.set(key, { label, unit, storage_type: ing.storage_type, grocery_category: ing.grocery_category })
         continue
       }
 
       // Prefer a known unit over blank entries when multiple historical rows exist.
       if (!existing.unit && unit) {
         map.set(key, { ...existing, unit })
+      }
+      if (!existing.grocery_category && ing.grocery_category) {
+        map.set(key, { ...existing, grocery_category: ing.grocery_category })
       }
     }
     return map
@@ -83,6 +88,7 @@ export default function RecipeForm() {
           quantity: ing.quantity,
           unit: ing.unit,
           storage_type: ing.storage_type,
+          grocery_category: ing.grocery_category || getGroceryCategory(ing.item_name),
           optional: Boolean(ing.optional),
         })),
       )
@@ -123,6 +129,9 @@ export default function RecipeForm() {
         if (defaults) {
           updated.unit = defaults.unit
           if (ing.storage_type === 'Dry Box') updated.storage_type = defaults.storage_type
+          updated.grocery_category = defaults.grocery_category || getGroceryCategory(name)
+        } else {
+          updated.grocery_category = getGroceryCategory(name)
         }
         return updated
       })
@@ -141,6 +150,8 @@ export default function RecipeForm() {
           if (!ing.unit) updated.unit = existing.unit
           if (ing.storage_type === 'Dry Box') updated.storage_type = existing.storage_type
         }
+        // Auto-suggest category based on name
+        updated.grocery_category = getGroceryCategory(value)
         return updated
       })
     )
@@ -215,6 +226,7 @@ export default function RecipeForm() {
               quantity: ing.quantity,
               unit: ing.unit,
               storage_type: ing.storage_type,
+              grocery_category: ing.grocery_category,
               optional: ing.optional,
             }),
           ),
@@ -234,6 +246,7 @@ export default function RecipeForm() {
             quantity: ing.quantity,
             unit: ing.unit,
             storage_type: ing.storage_type,
+            grocery_category: ing.grocery_category,
             optional: ing.optional,
           }),
         ),
@@ -471,6 +484,24 @@ export default function RecipeForm() {
                       {storageTypes.map((st) => (
                         <option key={st} value={st}>
                           {st}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Grocery category */}
+                  <div className="w-full sm:w-36">
+                    <label className="block text-xs font-medium text-camp-600 mb-1">Grocery Aisle</label>
+                    <select
+                      value={ing.grocery_category}
+                      onChange={(e) =>
+                        updateIngredient(index, 'grocery_category', e.target.value)
+                      }
+                      className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-camp-500 focus:border-transparent bg-white"
+                    >
+                      {GROCERY_CATEGORIES.map((cat) => (
+                        <option key={cat} value={cat}>
+                          {cat}
                         </option>
                       ))}
                     </select>

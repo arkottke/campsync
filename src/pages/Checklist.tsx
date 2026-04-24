@@ -25,6 +25,9 @@ const groceryIcons: Record<string, string> = {
   Pantry: '🫙',
   Frozen: '🧊',
   Beverages: '☕',
+  Bakery: '🍞',
+  Condiments: '🧂',
+  Snacks: '🍿',
   Other: '🛒',
 }
 
@@ -132,6 +135,7 @@ export default function Checklist() {
           quantity: Math.round(item.quantity * 100) / 100,
           unit: item.unit,
           storage_type: item.storage_type,
+          grocery_category: item.grocery_category,
           checked: false,
           is_grocery: item.is_grocery,
         })

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 
 export default function Login() {
-  const [email, setEmail] = useState('')
+  const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -14,10 +14,10 @@ export default function Login() {
     setLoading(true)
 
     try {
-      await login(email, password)
+      await login(username, password)
     } catch (err) {
       const pbErr = err as { message?: string }
-      setError(pbErr.message || 'Failed to authenticate. Check your email and password.')
+      setError(pbErr.message || 'Failed to authenticate. Check your username and password.')
     } finally {
       setLoading(false)
     }
@@ -41,15 +41,15 @@ export default function Login() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-camp-900 mb-1">
-                Email
+                Username
               </label>
               <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
                 required
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-camp-500 focus:border-transparent"
-                placeholder="albert.kottke@gmail.com"
+                placeholder="your_username"
               />
             </div>
 

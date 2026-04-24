@@ -85,6 +85,7 @@ export default function TripVault() {
 
   const [showPackImport, setShowPackImport] = useState(false)
   const [showAddForm, setShowAddForm] = useState(false)
+  const [showUncheckedOnly, setShowUncheckedOnly] = useState(false)
   const [newItemName, setNewItemName] = useState('')
   const [newItemQty, setNewItemQty] = useState<number>(1)
   const [newItemQtyType, setNewItemQtyType] = useState<'per_day' | 'total'>('total')
@@ -142,16 +143,19 @@ export default function TripVault() {
   }, [tripData])
 
   const groupItems = useMemo(() => {
-    return allItems.filter((item) => !item.person_id)
-  }, [allItems])
+    const items = allItems.filter((item) => !item.person_id)
+    return showUncheckedOnly ? items.filter((item) => !item.checked) : items
+  }, [allItems, showUncheckedOnly])
 
   const personItemsMap = useMemo(() => {
     const map = new Map<string, TripVaultItem[]>()
     for (const person of assignedPeople) {
-      map.set(person.id, allItems.filter((item) => item.person_id === person.id))
+      let items = allItems.filter((item) => item.person_id === person.id)
+      if (showUncheckedOnly) items = items.filter((item) => !item.checked)
+      map.set(person.id, items)
     }
     return map
-  }, [allItems, assignedPeople])
+  }, [allItems, assignedPeople, showUncheckedOnly])
 
   const checkedCount = allItems.filter((i) => i.checked).length
   const totalCount = allItems.length
@@ -230,6 +234,19 @@ export default function TripVault() {
                 />
               </div>
             </div>
+          )}
+
+          {/* Filter */}
+          {totalCount > 0 && (
+            <label className="flex items-center gap-2 mt-2 text-sm text-camp-600">
+              <input
+                type="checkbox"
+                checked={showUncheckedOnly}
+                onChange={e => setShowUncheckedOnly(e.target.checked)}
+                className="rounded border-gray-300"
+              />
+              Show unchecked only
+            </label>
           )}
         </div>
       </header>

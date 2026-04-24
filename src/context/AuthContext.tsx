@@ -6,8 +6,8 @@ interface AuthContextType {
   isAuthenticated: boolean
   user: User | null
   isLoading: boolean
-  login: (email: string, password: string) => Promise<void>
-  register: (email: string, password: string, passwordConfirm: string, name: string) => Promise<void>
+  login: (usernameOrEmail: string, password: string) => Promise<void>
+  register: (password: string, passwordConfirm: string, name: string, email?: string) => Promise<void>
   logout: () => Promise<void>
   updateProfile: (data: Partial<User>) => Promise<void>
 }
@@ -27,20 +27,21 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setIsLoading(false)
   }, [])
 
-  const login = async (email: string, password: string) => {
-    await PocketBaseService.login(email, password)
+  const login = async (usernameOrEmail: string, password: string) => {
+    await PocketBaseService.login(usernameOrEmail, password)
     const currentUser = PocketBaseService.getCurrentUser()
     setUser(currentUser)
   }
 
   const register = async (
-    email: string,
     password: string,
     passwordConfirm: string,
-    name: string
+    name: string,
+    email?: string
   ) => {
-    await PocketBaseService.register(email, password, passwordConfirm, name)
-    await PocketBaseService.login(email, password)
+    await PocketBaseService.register(password, passwordConfirm, name, email)
+    const username = name.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '')
+    await PocketBaseService.login(username, password)
     const currentUser = PocketBaseService.getCurrentUser()
     setUser(currentUser)
   }

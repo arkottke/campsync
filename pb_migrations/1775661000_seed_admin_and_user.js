@@ -39,6 +39,7 @@ migrate((app) => {
       const user = new Record(users)
       user.set("email", userEmail)
       user.set("name", userName)
+      user.set("username", userName.toLowerCase().replace(/\\s+/g, "_").replace(/[^a-z0-9_]/g, ""))
       user.set("is_admin", true)
       user.setPassword(userPassword)
       user.setVerified(true)

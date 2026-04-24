@@ -1,4 +1,4 @@
-import { Recipe, Ingredient } from '../types'
+import { Recipe, Ingredient, GroceryCategory } from '../types'
 import { PocketBaseService } from '../services/pocketbase'
 
 interface ExportIngredient {
@@ -6,6 +6,7 @@ interface ExportIngredient {
   quantity: number
   unit: string
   storage_type: 'Cooler' | 'Dry Box' | 'Trailer Bin' | 'Gear'
+  grocery_category?: GroceryCategory
   optional?: boolean
 }
 
@@ -102,6 +103,7 @@ export function exportRecipe(recipe: Recipe, ingredients: Ingredient[]) {
       quantity: ing.quantity,
       unit: ing.unit,
       storage_type: ing.storage_type,
+      grocery_category: ing.grocery_category,
       optional: Boolean(ing.optional),
     })),
   }
@@ -134,6 +136,7 @@ export async function exportAllRecipes(ownerId: string) {
             quantity: ing.quantity,
             unit: ing.unit,
             storage_type: ing.storage_type,
+            grocery_category: ing.grocery_category,
             optional: Boolean(ing.optional),
           })),
         }

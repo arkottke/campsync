@@ -1,4 +1,8 @@
-import { ChecklistItem, Recipe } from '../types'
+import { ChecklistItem, GroceryCategory, Recipe } from '../types'
+
+export const GROCERY_CATEGORIES: GroceryCategory[] = [
+  'Produce', 'Dairy', 'Meat', 'Frozen', 'Beverages', 'Pantry', 'Bakery', 'Condiments', 'Snacks', 'Other',
+]
 
 /**
  * Normalize item names for deduplication
@@ -44,6 +48,7 @@ export const aggregateIngredients = (
           quantity: adjustedQuantity,
           unit: ingredient.unit,
           storage_type: ingredient.storage_type,
+          grocery_category: ingredient.grocery_category || getGroceryCategory(ingredient.item_name),
           checked: false,
           is_grocery: isGroceryItem(ingredient.storage_type),
           created: new Date().toISOString(),
@@ -86,26 +91,24 @@ export const groupByStorageType = (
 /**
  * Group checklist items for grocery shopping mode
  * Groups by category (Produce, Dairy, etc.)
+ * Uses the stored grocery_category field when available, falls back to heuristic
  */
 export const groupByGroceryCategory = (
   items: ChecklistItem[]
 ): Record<string, ChecklistItem[]> => {
   const groceryItems = items.filter((item) => item.is_grocery)
 
-  const grouped: Record<string, ChecklistItem[]> = {
-    'Produce': [],
-    'Dairy': [],
-    'Meat': [],
-    'Pantry': [],
-    'Frozen': [],
-    'Beverages': [],
-    'Other': [],
+  const grouped: Record<string, ChecklistItem[]> = {}
+  for (const cat of GROCERY_CATEGORIES) {
+    grouped[cat] = []
   }
 
   groceryItems.forEach((item) => {
-    const category = getGroceryCategory(item.item_name)
+    const category = item.grocery_category || getGroceryCategory(item.item_name)
     if (grouped[category]) {
       grouped[category].push(item)
+    } else {
+      grouped['Other'].push(item)
     }
   })
 
@@ -120,14 +123,17 @@ const isGroceryItem = (storageType: string): boolean => {
 }
 
 /**
- * Infer grocery category from item name
- * This is a simple heuristic; could be extended
+ * Infer grocery category from item name.
+ * Expanded heuristic with 10 categories.
  */
-const getGroceryCategory = (itemName: string): string => {
+export const getGroceryCategory = (itemName: string): GroceryCategory => {
   const lower = itemName.toLowerCase()
 
   if (
-    ['milk', 'cheese', 'yogurt', 'butter', 'cream'].some((word) =>
+    ['milk', 'cheese', 'yogurt', 'butter', 'cream', 'sour cream', 'cottage',
+     'half and half', 'half & half', 'whipping', 'cheddar', 'mozzarella',
+     'parmesan', 'brie', 'gouda', 'swiss', 'provolone', 'ricotta',
+     'cream cheese', 'egg', 'eggs', 'whipped cream'].some((word) =>
       lower.includes(word)
     )
   ) {
@@ -135,29 +141,61 @@ const getGroceryCategory = (itemName: string): string => {
   }
 
   if (
-    ['chicken', 'beef', 'pork', 'turkey', 'fish', 'salmon', 'ground'].some(
-      (word) => lower.includes(word)
+    ['chicken', 'beef', 'pork', 'turkey', 'fish', 'salmon', 'ground',
+     'steak', 'sausage', 'bacon', 'ham', 'lamb', 'shrimp', 'crab',
+     'lobster', 'tuna', 'tilapia', 'cod', 'mahi', 'brisket', 'ribs',
+     'hot dog', 'hotdog', 'bratwurst', 'brat', 'jerky', 'pepperoni',
+     'salami', 'deli meat', 'lunch meat', 'prosciutto'].some((word) =>
+      lower.includes(word)
     )
   ) {
     return 'Meat'
   }
 
   if (
-    ['tomato', 'lettuce', 'onion', 'carrot', 'potato', 'pepper', 'spinach'].some(
-      (word) => lower.includes(word)
+    ['tomato', 'lettuce', 'onion', 'carrot', 'potato', 'pepper', 'spinach',
+     'garlic', 'celery', 'cucumber', 'avocado', 'broccoli', 'cauliflower',
+     'zucchini', 'squash', 'mushroom', 'corn', 'bean sprout', 'cabbage',
+     'kale', 'arugula', 'radish', 'beet', 'turnip', 'parsley', 'cilantro',
+     'basil', 'mint', 'dill', 'rosemary', 'thyme', 'green onion', 'scallion',
+     'leek', 'ginger', 'jalapeno', 'serrano', 'habanero', 'bell pepper',
+     'apple', 'banana', 'orange', 'lemon', 'lime', 'grape', 'strawberr',
+     'blueberr', 'raspberr', 'blackberr', 'peach', 'pear', 'plum',
+     'mango', 'pineapple', 'watermelon', 'melon', 'kiwi', 'cherry',
+     'berries', 'fruit', 'salad mix', 'coleslaw', 'herb'].some((word) =>
+      lower.includes(word)
     )
   ) {
     return 'Produce'
   }
 
   if (
-    ['frozen', 'ice'].some((word) => lower.includes(word))
+    ['bread', 'bun', 'buns', 'roll', 'rolls', 'bagel', 'croissant',
+     'tortilla', 'pita', 'naan', 'flatbread', 'english muffin', 'muffin',
+     'cake', 'donut', 'doughnut', 'pastry', 'pie crust', 'biscuit',
+     'cornbread', 'sourdough', 'ciabatta', 'focaccia', 'baguette',
+     'crouton', 'breadcrumb', 'hamburger bun', 'hot dog bun'].some((word) =>
+      lower.includes(word)
+    )
+  ) {
+    return 'Bakery'
+  }
+
+  if (
+    ['frozen', 'ice cream', 'popsicle', 'ice pop', 'frozen pizza',
+     'frozen vegetable', 'frozen fruit', 'ice'].some((word) =>
+      lower.includes(word)
+    )
   ) {
     return 'Frozen'
   }
 
   if (
-    ['coffee', 'tea', 'juice', 'water', 'soda'].some((word) =>
+    ['coffee', 'tea', 'juice', 'water', 'soda', 'pop', 'lemonade',
+     'gatorade', 'drink mix', 'cocoa', 'hot chocolate', 'cider',
+     'sparkling', 'seltzer', 'beer', 'wine', 'liquor', 'vodka',
+     'rum', 'whiskey', 'tequila', 'bourbon', 'gin', 'margarita',
+     'kombucha', 'energy drink', 'creamer'].some((word) =>
       lower.includes(word)
     )
   ) {
@@ -165,7 +203,44 @@ const getGroceryCategory = (itemName: string): string => {
   }
 
   if (
-    ['flour', 'sugar', 'salt', 'rice', 'pasta', 'oil', 'spice'].some((word) =>
+    ['ketchup', 'mustard', 'mayo', 'mayonnaise', 'relish', 'hot sauce',
+     'bbq sauce', 'barbecue sauce', 'soy sauce', 'teriyaki', 'sriracha',
+     'salsa', 'ranch', 'dressing', 'vinegar', 'worcestershire', 'tabasco',
+     'honey', 'maple syrup', 'jam', 'jelly', 'peanut butter', 'nutella',
+     'hummus', 'guacamole', 'sauce', 'marinade', 'seasoning',
+     'steak sauce', 'a1', 'buffalo sauce'].some((word) =>
+      lower.includes(word)
+    )
+  ) {
+    return 'Condiments'
+  }
+
+  if (
+    ['chip', 'chips', 'pretzel', 'popcorn', 'cracker', 'cookie', 'cookies',
+     'granola bar', 'trail mix', 'nut', 'nuts', 'peanut', 'almond',
+     'cashew', 'pistachio', 'snack', 'goldfish', 'cheez-it',
+     'fruit snack', 'gummy', 'candy', 'chocolate', 'marshmallow',
+     's\'more', 'smore', 'graham', 'dried fruit', 'beef jerky',
+     'protein bar', 'energy bar', 'raisin', 'sunflower seed'].some((word) =>
+      lower.includes(word)
+    )
+  ) {
+    return 'Snacks'
+  }
+
+  if (
+    ['flour', 'sugar', 'salt', 'rice', 'pasta', 'oil', 'spice', 'noodle',
+     'can of', 'canned', 'bean', 'beans', 'lentil', 'cereal', 'oatmeal',
+     'oats', 'pancake mix', 'baking', 'baking soda', 'baking powder',
+     'vanilla', 'cinnamon', 'cumin', 'paprika', 'oregano', 'chili powder',
+     'garlic powder', 'onion powder', 'pepper flake', 'cayenne',
+     'olive oil', 'vegetable oil', 'canola oil', 'coconut oil',
+     'cooking spray', 'broth', 'stock', 'bouillon', 'tomato sauce',
+     'tomato paste', 'soup', 'mac and cheese', 'ramen', 'couscous',
+     'quinoa', 'corn starch', 'cornstarch', 'spaghetti', 'macaroni',
+     'penne', 'aluminum foil', 'foil', 'wrap', 'plastic wrap',
+     'zip lock', 'ziplock', 'paper towel', 'napkin', 'plate',
+     'cup', 'utensil', 'charcoal', 'lighter', 'match'].some((word) =>
       lower.includes(word)
     )
   ) {

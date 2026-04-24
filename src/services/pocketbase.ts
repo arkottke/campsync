@@ -27,22 +27,26 @@ function uniquePeople(names: string[]): string[] {
 
 export class PocketBaseService {
   // Auth methods
-  static async login(email: string, password: string) {
-    return await pb.collection('users').authWithPassword(email, password)
+  static async login(usernameOrEmail: string, password: string) {
+    return await pb.collection('users').authWithPassword(usernameOrEmail, password)
   }
 
   static async register(
-    email: string,
     password: string,
     passwordConfirm: string,
-    name: string
+    name: string,
+    email?: string
   ) {
-    const userData = {
-      email,
-      emailVisibility: true,
+    const username = name.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '')
+    const userData: Record<string, unknown> = {
+      username,
       password,
       passwordConfirm,
       name,
+    }
+    if (email) {
+      userData.email = email
+      userData.emailVisibility = true
     }
     try {
       return await pb.collection('users').create(userData)
@@ -66,7 +70,8 @@ export class PocketBaseService {
     return {
       id: model.id,
       email: model.email || '',
-      name: model.name || model.email || '',
+      username: model.username || '',
+      name: model.name || model.username || model.email || '',
       is_admin: model.is_admin || false,
       avatar: model.avatar,
       created: model.created,
@@ -92,7 +97,8 @@ export class PocketBaseService {
     const mapUser = (r: any): User => ({
       id: r.id,
       email: r.email || '',
-      name: r.name || r.email || '',
+      username: r.username || '',
+      name: r.name || r.username || r.email || '',
       is_admin: r.is_admin || false,
       avatar: r.avatar,
       created: r.created,
@@ -119,9 +125,11 @@ export class PocketBaseService {
   }
 
   static async createUser(email: string, password: string, name: string, isAdmin = false) {
+    const username = name.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '')
     return await pb.collection('users').create({
-      email,
-      emailVisibility: true,
+      email: email || undefined,
+      emailVisibility: !!email,
+      username,
       password,
       passwordConfirm: password,
       name,
@@ -182,7 +190,7 @@ export class PocketBaseService {
 
   static async listAllIngredients() {
     return await pb.collection('ingredients').getFullList({
-      fields: 'item_name,unit,storage_type',
+      fields: 'item_name,unit,storage_type,grocery_category',
     })
   }
 

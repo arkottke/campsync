@@ -95,12 +95,11 @@ export default function Admin() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-camp-900 mb-1">Email</label>
+                <label className="block text-sm font-medium text-camp-900 mb-1">Email <span className="text-camp-400 text-xs">(optional)</span></label>
                 <input
                   type="email"
                   value={form.email}
                   onChange={(e) => setForm(f => ({ ...f, email: e.target.value }))}
-                  required
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-camp-500 focus:border-transparent"
                   placeholder="user@example.com"
                 />
@@ -151,7 +150,7 @@ export default function Admin() {
             <thead className="bg-camp-50 border-b border-gray-200">
               <tr>
                 <th className="text-left px-4 py-3 text-camp-700 font-medium">Name</th>
-                <th className="text-left px-4 py-3 text-camp-700 font-medium">Email</th>
+                <th className="text-left px-4 py-3 text-camp-700 font-medium">Username</th>
                 <th className="text-left px-4 py-3 text-camp-700 font-medium">Role</th>
                 <th className="text-right px-4 py-3 text-camp-700 font-medium">Actions</th>
               </tr>
@@ -160,7 +159,7 @@ export default function Admin() {
               {users.map((u) => (
                 <tr key={u.id} className="hover:bg-gray-50">
                   <td className="px-4 py-3 text-camp-900 font-medium">{u.name}</td>
-                  <td className="px-4 py-3 text-camp-700">{u.email}</td>
+                  <td className="px-4 py-3 text-camp-700">{u.username || u.email}</td>
                   <td className="px-4 py-3">
                     {u.is_admin ? (
                       <span className="px-2 py-0.5 bg-camp-100 text-camp-700 rounded text-xs font-medium">Admin</span>
