@@ -65,12 +65,12 @@ export default function VaultPackForm() {
         <div className="max-w-3xl mx-auto px-4 py-4 flex items-center gap-3">
           <button
             onClick={() => navigate(isEdit ? `/vault/packs/${packId}` : '/vault')}
-            className="text-camp-600 hover:text-camp-800 transition"
-            aria-label="Go back"
+            className="flex items-center gap-1 text-camp-600 hover:text-camp-800 font-medium transition"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
+            {isEdit ? 'Pack' : 'Gear Vault'}
           </button>
           <h1 className="text-2xl font-bold text-camp-900">
             {isEdit ? 'Edit Pack' : 'New Gear Pack'}

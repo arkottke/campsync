@@ -1,9 +1,10 @@
 import { useState, useMemo } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { useTrip, useDeleteTrip, useUpdateTrip, useCopyTrip } from '../hooks/useQueries'
+import { useTrip, useDeleteTrip, useUpdateTrip, useCopyTrip, useTripTodos, useCreateTripTodo, useUpdateTripTodo, useDeleteTripTodo } from '../hooks/useQueries'
+import { useRealtimeTripTodos } from '../hooks/useRealtime'
 import { PocketBaseService } from '../services/pocketbase'
-import { Recipe, TripMeal, Trip } from '../types'
+import { Recipe, TripMeal, Trip, TripTodo } from '../types'
 import { useAuth } from '../context/AuthContext'
 
 const MEAL_SLOTS = [
@@ -101,7 +102,7 @@ function RecipePicker({ recipes, onSelect, onClose }: RecipePickerProps) {
         </div>
 
         {/* Recipe list */}
-        <div className="overflow-y-auto flex-1 px-4 pb-4">
+        <div className="overflow-y-auto flex-1 px-4 pb-2">
           {filtered.length === 0 && (
             <p className="text-center text-camp-500 py-6 text-sm">
               No recipes found.
@@ -120,6 +121,19 @@ function RecipePicker({ recipes, onSelect, onClose }: RecipePickerProps) {
             </button>
           ))}
         </div>
+
+        {/* New recipe shortcut */}
+        <div className="px-4 py-3 border-t border-gray-100">
+          <Link
+            to="/recipes/new"
+            className="flex items-center gap-2 w-full px-3 py-2 rounded-lg text-sm font-medium text-camp-600 hover:bg-camp-50 transition"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            New Recipe
+          </Link>
+        </div>
       </div>
     </div>
   )
@@ -135,6 +149,25 @@ export default function TripDetail() {
   const deleteTripMutation = useDeleteTrip()
   const updateTrip = useUpdateTrip()
   const copyTripMutation = useCopyTrip()
+
+  // Todo list
+  const { data: todosRaw } = useTripTodos(tripId)
+  const createTodo = useCreateTripTodo()
+  const updateTodo = useUpdateTripTodo()
+  const deleteTodo = useDeleteTripTodo()
+  useRealtimeTripTodos(tripId)
+  const [newTodoTitle, setNewTodoTitle] = useState('')
+  const [showCompletedTodos, setShowCompletedTodos] = useState(false)
+
+  const todos: TripTodo[] = Array.isArray(todosRaw)
+    ? todosRaw
+    : (todosRaw as any)?.items ?? []
+
+  const filteredTodos = showCompletedTodos
+    ? todos
+    : todos.filter((t) => !t.checked)
+
+  const todosCheckedCount = todos.filter((t) => t.checked).length
 
   // People inline editor
   const [newPersonName, setNewPersonName] = useState('')
@@ -388,26 +421,28 @@ export default function TripDetail() {
           </div>
 
           {/* Action buttons */}
-          <div className="flex items-center gap-3 mt-3">
-            <Link
-              to={`/trips/${tripId}/vault`}
-              className="px-4 py-1.5 text-sm bg-camp-100 hover:bg-camp-200 text-camp-800 rounded-lg transition font-medium"
-            >
-              Gear List
-            </Link>
-            <Link
-              to={`/trips/${tripId}/pantry`}
-              className="px-4 py-1.5 text-sm bg-camp-100 hover:bg-camp-200 text-camp-800 rounded-lg transition font-medium"
-            >
-              Pantry
-            </Link>
-            <Link
-              to={`/trips/${tripId}/checklist`}
-              className="px-4 py-1.5 text-sm bg-accent-100 hover:bg-accent-200 text-accent-800 rounded-lg transition font-medium"
-            >
-              Food List
-            </Link>
-            <div className="ml-auto flex items-center gap-3">
+          <div className="flex items-center justify-between mt-3">
+            <div className="flex items-center gap-2">
+              <Link
+                to={`/trips/${tripId}/vault`}
+                className="px-4 py-1.5 text-sm bg-camp-100 hover:bg-camp-200 text-camp-800 rounded-lg transition font-medium"
+              >
+                Gear List
+              </Link>
+              <Link
+                to={`/trips/${tripId}/pantry`}
+                className="px-4 py-1.5 text-sm bg-camp-100 hover:bg-camp-200 text-camp-800 rounded-lg transition font-medium"
+              >
+                Pantry
+              </Link>
+              <Link
+                to={`/trips/${tripId}/checklist`}
+                className="px-4 py-1.5 text-sm bg-accent-100 hover:bg-accent-200 text-accent-800 rounded-lg transition font-medium"
+              >
+                Food List
+              </Link>
+            </div>
+            <div className="flex items-center gap-2">
               <button
                 onClick={() => navigate(`/trips/${tripId}/edit`)}
                 className="px-4 py-1.5 text-sm bg-camp-100 hover:bg-camp-200 text-camp-800 rounded-lg transition font-medium"
@@ -579,6 +614,121 @@ export default function TripDetail() {
           ))}
         </div>
       </main>
+
+      {/* To-Do List */}
+      <section className="max-w-3xl mx-auto px-4 pb-6">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-lg font-semibold text-camp-800">
+            To-Do List
+          </h2>
+          {todos.length > 0 && (
+            <label className="flex items-center gap-2 text-sm text-camp-600 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={showCompletedTodos}
+                onChange={() => setShowCompletedTodos(!showCompletedTodos)}
+                className="h-4 w-4 rounded border-gray-300 text-camp-600 focus:ring-camp-500"
+              />
+              Show completed
+            </label>
+          )}
+        </div>
+
+        {/* Progress */}
+        {todos.length > 0 && (
+          <div className="flex items-center gap-2 text-xs text-camp-500 mb-3">
+            <div className="flex-1 bg-gray-200 rounded-full h-1.5">
+              <div
+                className="bg-camp-500 h-1.5 rounded-full transition-all"
+                style={{ width: `${Math.round((todosCheckedCount / todos.length) * 100)}%` }}
+              />
+            </div>
+            <span>{todosCheckedCount}/{todos.length}</span>
+          </div>
+        )}
+
+        {/* Todo items */}
+        <div className="bg-white rounded-lg shadow divide-y divide-gray-100">
+          {filteredTodos.length === 0 && todos.length > 0 && !showCompletedTodos && (
+            <p className="px-4 py-3 text-sm text-camp-500">All items completed!</p>
+          )}
+          {filteredTodos.map((todo) => (
+            <div
+              key={todo.id}
+              className={`flex items-center gap-3 px-4 py-3 transition ${todo.checked ? 'bg-gray-50' : ''}`}
+            >
+              <input
+                type="checkbox"
+                checked={todo.checked}
+                onChange={() => {
+                  if (!tripId) return
+                  updateTodo.mutate({
+                    id: todo.id,
+                    tripId,
+                    data: {
+                      checked: !todo.checked,
+                      checked_by: !todo.checked ? (user?.name || '') : '',
+                    },
+                  })
+                }}
+                className="h-5 w-5 rounded border-gray-300 text-camp-600 focus:ring-camp-500"
+              />
+              <span className={`flex-1 text-sm ${todo.checked ? 'line-through text-gray-400' : 'text-camp-900'}`}>
+                {todo.title}
+              </span>
+              {todo.checked && todo.checked_by && (
+                <span className="text-xs text-gray-400 whitespace-nowrap">
+                  {todo.checked_by}
+                </span>
+              )}
+              <button
+                onClick={() => {
+                  if (!tripId) return
+                  deleteTodo.mutate({ id: todo.id, tripId })
+                }}
+                className="shrink-0 p-1 text-camp-400 hover:text-red-500 transition"
+                aria-label={`Delete ${todo.title}`}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          ))}
+        </div>
+
+        {/* Add todo form */}
+        <div className="flex items-center gap-2 mt-3">
+          <input
+            type="text"
+            value={newTodoTitle}
+            onChange={(e) => setNewTodoTitle(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault()
+                const title = newTodoTitle.trim()
+                if (!title || !tripId) return
+                createTodo.mutate({ trip_id: tripId, title, checked: false })
+                setNewTodoTitle('')
+              }
+            }}
+            placeholder="Add a to-do item..."
+            className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-camp-500 focus:border-transparent"
+          />
+          <button
+            onClick={() => {
+              const title = newTodoTitle.trim()
+              if (!title || !tripId) return
+              createTodo.mutate({ trip_id: tripId, title, checked: false })
+              setNewTodoTitle('')
+            }}
+            disabled={!newTodoTitle.trim() || createTodo.isPending}
+            className="px-4 py-2 text-sm bg-camp-600 hover:bg-camp-700 disabled:bg-camp-400 text-white rounded-lg transition font-medium"
+          >
+            Add
+          </button>
+        </div>
+      </section>
 
       {/* Recipe Picker Modal */}
       {pickerSlot && (

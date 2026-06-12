@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { PocketBaseService } from '../services/pocketbase'
 import { useAuth } from '../context/AuthContext'
@@ -33,6 +33,7 @@ const groceryIcons: Record<string, string> = {
 
 export default function Checklist() {
   const { id: tripId } = useParams<{ id: string }>()
+  const navigate = useNavigate()
   const { user } = useAuth()
   const { toast } = useToast()
   const queryClient = useQueryClient()
@@ -175,10 +176,19 @@ export default function Checklist() {
     <div className="">
       <header className="bg-white shadow sticky top-0 z-10">
         <div className="max-w-3xl mx-auto px-4 py-3">
-          <div className="flex items-center justify-between mb-2">
-            <Link to={`/trips/${tripId}`} className="text-camp-600 hover:text-camp-700 font-medium text-sm">
-              ← Back to Trip
-            </Link>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => navigate(`/trips/${tripId}`)}
+                className="flex items-center gap-1 text-camp-600 hover:text-camp-800 font-medium transition"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+                Trip
+              </button>
+              <h1 className="text-xl font-bold text-camp-900">Checklist</h1>
+            </div>
             <button
               onClick={() => generateChecklist.mutate()}
               disabled={generateChecklist.isPending}
@@ -187,7 +197,6 @@ export default function Checklist() {
               {generateChecklist.isPending ? 'Generating...' : 'Regenerate List'}
             </button>
           </div>
-          <h1 className="text-xl font-bold text-camp-900">Checklist</h1>
 
           {/* Progress */}
           <div className="mt-2">

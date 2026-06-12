@@ -112,11 +112,10 @@ export default function Trips() {
           <div className="flex items-center gap-3">
             <button
               onClick={() => navigate('/dashboard')}
-              className="text-camp-600 hover:text-camp-800 transition"
-              aria-label="Back to dashboard"
+              className="flex items-center gap-1 text-camp-600 hover:text-camp-800 font-medium transition"
             >
               <svg
-                className="w-6 h-6"
+                className="w-5 h-5"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -128,6 +127,7 @@ export default function Trips() {
                   d="M15 19l-7-7 7-7"
                 />
               </svg>
+              Dashboard
             </button>
             <h1 className="text-2xl font-bold text-camp-900">Trips</h1>
           </div>

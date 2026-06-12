@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '../context/AuthContext'
 import { useTripVaultItems, useCreateTripVaultItem, useUpdateTripVaultItem, useDeleteTripVaultItem } from '../hooks/useQueries'
@@ -63,6 +63,7 @@ function PantryItemRow({
 
 export default function TripPantry() {
   const { id: tripId } = useParams<{ id: string }>()
+  const navigate = useNavigate()
   const { user } = useAuth()
 
   const [showPackImport, setShowPackImport] = useState(false)
@@ -142,19 +143,23 @@ export default function TripPantry() {
     <div className="min-h-screen bg-camp-50">
       <header className="bg-white shadow sticky top-0 z-10">
         <div className="max-w-3xl mx-auto px-4 py-3">
-          <div className="flex items-center justify-between mb-2">
-            <Link to={`/trips/${tripId}`} className="text-camp-600 hover:text-camp-700 font-medium text-sm">
-              ← Back to Trip
-            </Link>
+          <div className="flex items-center gap-3 mb-1">
+            <button
+              onClick={() => navigate(`/trips/${tripId}`)}
+              className="flex items-center gap-1 text-camp-600 hover:text-camp-800 font-medium transition"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+              Trip
+            </button>
+            <h1 className="text-xl font-bold text-camp-900">Trip Pantry</h1>
           </div>
-          <h1 className="text-xl font-bold text-camp-900">
-            Trip Pantry
-            {tripData && (
-              <span className="text-sm font-normal text-camp-500 ml-2">
-                ({tripData.name} — {tripDays} day{tripDays !== 1 ? 's' : ''})
-              </span>
-            )}
-          </h1>
+          {tripData && (
+            <p className="text-sm text-camp-500 mb-1">
+              {tripData.name} — {tripDays} day{tripDays !== 1 ? 's' : ''}
+            </p>
+          )}
 
           {totalCount > 0 && (
             <div className="mt-2">

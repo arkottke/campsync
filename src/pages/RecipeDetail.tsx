@@ -110,7 +110,7 @@ export default function RecipeDetail() {
             </button>
             <button
               onClick={() => navigate(`/recipes/${id}/edit`)}
-              className="px-4 py-2 bg-camp-600 hover:bg-camp-700 text-white font-medium rounded-lg transition"
+              className="px-4 py-2 bg-accent-600 hover:bg-accent-700 text-white font-medium rounded-lg transition"
             >
               Edit
             </button>

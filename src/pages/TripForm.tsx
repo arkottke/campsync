@@ -108,14 +108,13 @@ export default function TripForm() {
     <div className="">
       {/* Header */}
       <header className="bg-white shadow">
-        <div className="max-w-lg mx-auto px-4 py-4 flex items-center gap-3">
+        <div className="max-w-2xl mx-auto px-4 py-4 flex items-center gap-3">
           <button
             onClick={() => navigate(isEdit ? `/trips/${id}` : '/trips')}
-            className="text-camp-600 hover:text-camp-800 transition"
-            aria-label="Go back"
+            className="flex items-center gap-1 text-camp-600 hover:text-camp-800 font-medium transition"
           >
             <svg
-              className="w-6 h-6"
+              className="w-5 h-5"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -127,6 +126,7 @@ export default function TripForm() {
                 d="M15 19l-7-7 7-7"
               />
             </svg>
+            {isEdit ? 'Trip' : 'Trips'}
           </button>
           <h1 className="text-2xl font-bold text-camp-900">
             {isEdit ? 'Edit Trip' : 'New Trip'}
@@ -135,7 +135,7 @@ export default function TripForm() {
       </header>
 
       {/* Form */}
-      <main className="max-w-lg mx-auto px-4 py-6">
+      <main className="max-w-2xl mx-auto px-4 py-6">
         <div className="bg-white rounded-lg shadow p-6">
           {error && (
             <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded text-sm">
