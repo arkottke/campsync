@@ -265,11 +265,11 @@ export default function RecipeForm() {
     return (
       <div className="">
         <header className="bg-white shadow">
-          <div className="max-w-3xl mx-auto px-4 py-4">
+          <div className="max-w-4xl mx-auto px-4 py-4">
             <div className="h-6 bg-gray-200 rounded w-1/3 animate-pulse" />
           </div>
         </header>
-        <main className="max-w-3xl mx-auto px-4 py-6">
+        <main className="max-w-4xl mx-auto px-4 py-6">
           <div className="bg-white rounded-lg shadow p-6 animate-pulse space-y-4">
             <div className="h-10 bg-gray-200 rounded" />
             <div className="h-10 bg-gray-200 rounded w-1/2" />
@@ -284,7 +284,7 @@ export default function RecipeForm() {
     <div className="">
       {/* Header */}
       <header className="bg-white shadow">
-        <div className="max-w-3xl mx-auto px-4 py-4 flex items-center gap-3">
+        <div className="max-w-4xl mx-auto px-4 py-4 flex items-center gap-3">
           <button
             onClick={() => navigate(isEdit ? `/recipes/${id}` : '/recipes')}
             className="text-camp-600 hover:text-camp-800 transition"
@@ -300,7 +300,7 @@ export default function RecipeForm() {
         </div>
       </header>
 
-      <main className="max-w-3xl mx-auto px-4 py-6">
+      <main className="max-w-4xl mx-auto px-4 py-6">
         {error && (
           <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
             {error}
