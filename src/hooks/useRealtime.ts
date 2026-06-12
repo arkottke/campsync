@@ -102,3 +102,28 @@ export function useRealtimeTripVaultItems(tripId: string | undefined) {
     }
   }, [tripId, queryClient])
 }
+
+/**
+ * Subscribe to real-time updates for trip todos.
+ */
+export function useRealtimeTripTodos(tripId: string | undefined) {
+  const queryClient = useQueryClient()
+
+  useEffect(() => {
+    if (!tripId) return
+
+    const unsubscribe = pb.collection('trip_todos').subscribe('*', (e) => {
+      if (e.record.trip_id === tripId) {
+        queryClient.invalidateQueries({ queryKey: ['tripTodos', tripId] })
+      }
+    })
+
+    return () => {
+      unsubscribe.then((unsub) => {
+        if (typeof unsub === 'function') unsub()
+      }).catch(() => {
+        pb.collection('trip_todos').unsubscribe('*')
+      })
+    }
+  }, [tripId, queryClient])
+}

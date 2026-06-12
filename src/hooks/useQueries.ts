@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { PocketBaseService } from '../services/pocketbase'
-import { Recipe, Trip, ChecklistItem, Supply, TripVaultItem, VaultPack, VaultPackItem, TripItemListType } from '../types'
+import { Recipe, Trip, ChecklistItem, Supply, TripVaultItem, VaultPack, VaultPackItem, TripItemListType, TripTodo } from '../types'
 
 // Recipe hooks
 export const useRecipes = () => {
@@ -360,6 +360,50 @@ export const useCopyTrip = () => {
       PocketBaseService.copyTrip(sourceTripId, userId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['trips'] })
+    },
+  })
+}
+
+// Trip Todo hooks
+export const useTripTodos = (tripId: string | undefined) => {
+  return useQuery({
+    queryKey: ['tripTodos', tripId],
+    queryFn: () => PocketBaseService.getTripTodos(tripId!),
+    enabled: !!tripId,
+  })
+}
+
+export const useCreateTripTodo = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (todo: Partial<TripTodo>) => PocketBaseService.createTripTodo(todo),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['tripTodos', variables.trip_id] })
+    },
+  })
+}
+
+export const useUpdateTripTodo = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ id, data, tripId }: { id: string; data: Partial<TripTodo>; tripId: string }) =>
+      PocketBaseService.updateTripTodo(id, data),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['tripTodos', variables.tripId] })
+    },
+  })
+}
+
+export const useDeleteTripTodo = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ id, tripId }: { id: string; tripId: string }) =>
+      PocketBaseService.deleteTripTodo(id),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['tripTodos', variables.tripId] })
     },
   })
 }

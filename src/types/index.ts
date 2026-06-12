@@ -123,6 +123,17 @@ export interface TripVaultItem {
   updated: string
 }
 
+// Trip Todo types
+export interface TripTodo {
+  id: string
+  trip_id: string
+  title: string
+  checked: boolean
+  checked_by?: string
+  created: string
+  updated: string
+}
+
 // Auth types
 export interface AuthToken {
   token: string

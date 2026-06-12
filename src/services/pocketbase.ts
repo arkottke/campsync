@@ -1,5 +1,5 @@
 import PocketBase from 'pocketbase'
-import { User, Recipe, Trip, TripMeal, ChecklistItem, Supply, TripVaultItem, VaultPack, VaultPackItem, TripItemListType } from '../types'
+import { User, Recipe, Trip, TripMeal, ChecklistItem, Supply, TripVaultItem, VaultPack, VaultPackItem, TripItemListType, TripTodo } from '../types'
 
 const pb = new PocketBase(import.meta.env.VITE_PB_URL || 'http://localhost:8090')
 
@@ -371,6 +371,26 @@ export class PocketBaseService {
     })
   }
 
+  // Trip Todo methods
+  static async createTripTodo(todo: Partial<TripTodo>) {
+    return await pb.collection('trip_todos').create(todo)
+  }
+
+  static async getTripTodos(tripId: string) {
+    return await pb.collection('trip_todos').getFullList({
+      filter: `trip_id='${tripId}'`,
+      sort: 'created',
+    })
+  }
+
+  static async updateTripTodo(id: string, data: Partial<TripTodo>) {
+    return await pb.collection('trip_todos').update(id, data)
+  }
+
+  static async deleteTripTodo(id: string) {
+    return await pb.collection('trip_todos').delete(id)
+  }
+
   // Vault Pack methods
   static async createVaultPack(pack: Partial<VaultPack>) {
     return await pb.collection('vault_packs').create(pack)
@@ -499,6 +519,16 @@ export class PocketBaseService {
         trip_id: newTrip.id,
         name: supply.name,
         category: supply.category,
+        checked: false,
+      })
+    }
+
+    // Copy todos (reset checked)
+    const todos = await PocketBaseService.getTripTodos(sourceTripId)
+    for (const todo of todos) {
+      await pb.collection('trip_todos').create({
+        trip_id: newTrip.id,
+        title: todo.title,
         checked: false,
       })
     }
