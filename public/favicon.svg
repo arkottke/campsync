@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 100">
+  <!-- Hitch tongue -->
+  <line x1="3" y1="63" x2="22" y2="63" stroke="#374151" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="4" cy="63" r="3" fill="#374151"/>
+
+  <!-- Trailer body: tall front, roof curves back and down, rounded rear -->
+  <path d="M22,68 L22,22 C32,14 72,20 83,44 C91,52 90,64 83,68 Z"
+        fill="#16a34a"/>
+  <path d="M22,68 L22,22 C32,14 72,20 83,44 C91,52 90,64 83,68 Z"
+        fill="none" stroke="#15803d" stroke-width="1.5"/>
+
+  <!-- Rear galley hatch seam -->
+  <path d="M75,27 C87,39 88,57 78,68"
+        fill="none" stroke="#15803d" stroke-width="1.5" stroke-linecap="round"/>
+
+  <!-- Porthole window -->
+  <circle cx="44" cy="43" r="10" fill="#bbf7d0" stroke="#15803d" stroke-width="1.5"/>
+  <circle cx="44" cy="43" r="5" fill="#dcfce7"/>
+
+  <!-- Chassis rail -->
+  <rect x="28" y="68" width="54" height="4" rx="2" fill="#374151"/>
+
+  <!-- Front wheel -->
+  <circle cx="39" cy="80" r="12" fill="#1f2937"/>
+  <circle cx="39" cy="80" r="6.5" fill="#374151"/>
+  <circle cx="39" cy="80" r="3" fill="#9ca3af"/>
+
+  <!-- Rear wheel -->
+  <circle cx="71" cy="80" r="12" fill="#1f2937"/>
+  <circle cx="71" cy="80" r="6.5" fill="#374151"/>
+  <circle cx="71" cy="80" r="3" fill="#9ca3af"/>
+</svg>

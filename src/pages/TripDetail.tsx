@@ -42,17 +42,28 @@ function formatHeaderDate(start: string, end: string): string {
   return `${s.toLocaleDateString(undefined, opts)} - ${e.toLocaleDateString(undefined, { ...opts, year: 'numeric' })}`
 }
 
+const SLOT_TO_CATEGORY: Record<string, string> = {
+  B: 'Breakfast',
+  L: 'Lunch',
+  D: 'Dinner',
+  S: 'Snack',
+}
+
 interface RecipePickerProps {
   recipes: Recipe[]
+  slot: TripMeal['meal_slot']
   onSelect: (recipeId: string) => void
   onClose: () => void
 }
 
-function RecipePicker({ recipes, onSelect, onClose }: RecipePickerProps) {
+function RecipePicker({ recipes, slot, onSelect, onClose }: RecipePickerProps) {
   const [search, setSearch] = useState('')
 
-  const filtered = recipes.filter((r) =>
-    r.name.toLowerCase().includes(search.toLowerCase()),
+  const category = SLOT_TO_CATEGORY[slot]
+  const filtered = recipes.filter(
+    (r) =>
+      r.category === category &&
+      r.name.toLowerCase().includes(search.toLowerCase()),
   )
 
   return (
@@ -351,12 +362,6 @@ export default function TripDetail() {
             <span>
               {tripData.guest_count} guest{tripData.guest_count !== 1 ? 's' : ''}
             </span>
-            {tripData.members && tripData.members.length > 0 && (
-              <span>
-                {tripData.members.length} member
-                {tripData.members.length !== 1 ? 's' : ''}
-              </span>
-            )}
           </div>
 
           {/* People display / editor */}
@@ -734,6 +739,7 @@ export default function TripDetail() {
       {pickerSlot && (
         <RecipePicker
           recipes={recipesList}
+          slot={pickerSlot.slot}
           onSelect={handleAddMeal}
           onClose={() => setPickerSlot(null)}
         />
