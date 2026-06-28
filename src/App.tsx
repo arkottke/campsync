@@ -20,6 +20,7 @@ import TripPantry from './pages/TripPantry'
 import Checklist from './pages/Checklist'
 import ProtectedRoute from './components/ProtectedRoute'
 import Admin from './pages/Admin'
+import FoodItems from './pages/FoodItems'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -96,6 +97,7 @@ function AppRoutes() {
         <Route path="/trips/:id/vault" element={<P><TripVault /></P>} />
         <Route path="/trips/:id/pantry" element={<P><TripPantry /></P>} />
         <Route path="/trips/:id/checklist" element={<P><Checklist /></P>} />
+        <Route path="/food-items" element={<P><FoodItems /></P>} />
         <Route path="/admin" element={<P><Admin /></P>} />
         <Route path="/" element={<Navigate to={isAuthenticated ? '/dashboard' : '/login'} />} />
         <Route path="*" element={<Navigate to="/" />} />

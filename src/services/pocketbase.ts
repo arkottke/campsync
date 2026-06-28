@@ -194,6 +194,12 @@ export class PocketBaseService {
     })
   }
 
+  static async listAllIngredientsAdmin() {
+    return await pb.collection('ingredients').getFullList({
+      fields: 'id,recipe_id,item_name,unit,storage_type,grocery_category',
+    })
+  }
+
   static async updateIngredient(id: string, data: Record<string, unknown>) {
     return await pb.collection('ingredients').update(id, data)
   }

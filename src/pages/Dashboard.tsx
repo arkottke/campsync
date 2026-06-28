@@ -11,7 +11,7 @@ export default function Dashboard() {
     <div className="px-4 py-6">
       <h2 className="text-2xl font-bold text-camp-900 mb-6">Dashboard</h2>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
         <Link to="/recipes" className="bg-white rounded-xl shadow-sm border border-camp-100 p-5 hover:shadow-md transition group">
           <div className="text-3xl mb-2">📖</div>
           <h3 className="text-lg font-bold text-camp-900 mb-1">Recipe Vault</h3>
@@ -38,6 +38,13 @@ export default function Dashboard() {
           <h3 className="text-lg font-bold text-camp-900 mb-1">Checklists</h3>
           <p className="text-sm text-camp-600">Shopping & packing lists</p>
           <span className="text-accent-600 text-sm font-medium mt-2 inline-block group-hover:translate-x-1 transition-transform">Select Trip →</span>
+        </Link>
+
+        <Link to="/food-items" className="bg-white rounded-xl shadow-sm border border-camp-100 p-5 hover:shadow-md transition group">
+          <div className="text-3xl mb-2">🥕</div>
+          <h3 className="text-lg font-bold text-camp-900 mb-1">Food Items</h3>
+          <p className="text-sm text-camp-600">Normalize ingredient names & categories</p>
+          <span className="text-accent-600 text-sm font-medium mt-2 inline-block group-hover:translate-x-1 transition-transform">Browse →</span>
         </Link>
       </div>
 

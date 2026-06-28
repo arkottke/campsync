@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { PocketBaseService } from '../services/pocketbase'
-import { Recipe, Trip, ChecklistItem, Supply, TripVaultItem, VaultPack, VaultPackItem, TripItemListType, TripTodo } from '../types'
+import { Ingredient, Recipe, Trip, ChecklistItem, Supply, TripVaultItem, VaultPack, VaultPackItem, TripItemListType, TripTodo } from '../types'
 
 // Recipe hooks
 export const useRecipes = () => {
@@ -58,6 +58,27 @@ export const useAllIngredients = () => {
     queryKey: ['allIngredients'],
     queryFn: () => PocketBaseService.listAllIngredients(),
     staleTime: 60_000,
+  })
+}
+
+export const useAllIngredientsAdmin = () => {
+  return useQuery({
+    queryKey: ['allIngredientsAdmin'],
+    queryFn: () => PocketBaseService.listAllIngredientsAdmin() as Promise<Ingredient[]>,
+    staleTime: 30_000,
+  })
+}
+
+export const useBulkUpdateIngredients = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (updates: Array<{ id: string; data: Record<string, unknown> }>) =>
+      Promise.all(updates.map(({ id, data }) => PocketBaseService.updateIngredient(id, data))),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['allIngredientsAdmin'] })
+      queryClient.invalidateQueries({ queryKey: ['allIngredients'] })
+      queryClient.invalidateQueries({ queryKey: ['recipes'] })
+    },
   })
 }
 
