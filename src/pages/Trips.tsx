@@ -102,24 +102,6 @@ function TripCard({ trip }: { trip: Trip }) {
             </svg>
             {trip.guest_count} guest{trip.guest_count !== 1 ? 's' : ''}
           </span>
-          {trip.members && trip.members.length > 0 && (
-            <span className="flex items-center gap-1">
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"
-                />
-              </svg>
-              {trip.members.length} member{trip.members.length !== 1 ? 's' : ''}
-            </span>
-          )}
         </div>
       </button>
 
