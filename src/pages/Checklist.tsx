@@ -148,6 +148,50 @@ export default function Checklist() {
     },
   })
 
+  // Shopping and packing are two passes over the same items: you check things
+  // off in the store, then need those same boxes empty again to tick them off
+  // as they go into the cooler. So this clears the checks rather than deleting
+  // anything. Scope follows the current view -- Grocery Mode shows only
+  // is_grocery items, the other two show everything -- so the button never
+  // clears a check the user cannot see.
+  const checkedInScope = useMemo(() => {
+    const all = (checklistItems as unknown as ChecklistItem[]) ?? []
+    const inScope = viewMode === 'grocery' ? all.filter(i => i.is_grocery) : all
+    return inScope.filter(i => i.checked)
+  }, [checklistItems, viewMode])
+
+  const clearChecks = useMutation({
+    mutationFn: async () => {
+      for (const item of checkedInScope) {
+        await PocketBaseService.updateChecklistItem(item.id, {
+          checked: false,
+          checked_by: '',
+        })
+      }
+      return checkedInScope.length
+    },
+    onSuccess: (count) => {
+      queryClient.invalidateQueries({ queryKey: ['checklist', tripId] })
+      toast(`Unchecked ${count} ${count === 1 ? 'item' : 'items'}`)
+    },
+    onError: () => toast('Could not clear the checks', 'error'),
+  })
+
+  const clearLabel = viewMode === 'grocery' ? 'Uncheck Groceries' : 'Uncheck All'
+
+  const handleClearChecks = () => {
+    const count = checkedInScope.length
+    const what = viewMode === 'grocery' ? 'grocery item' : 'item'
+    if (
+      confirm(
+        `Uncheck ${count} checked ${what}${count === 1 ? '' : 's'}? ` +
+          'The items stay on the list -- only the checkmarks are cleared.'
+      )
+    ) {
+      clearChecks.mutate()
+    }
+  }
+
   const items = useMemo(() => {
     const all = (checklistItems as unknown as ChecklistItem[]) ?? []
     if (showUncheckedOnly) return all.filter(i => !i.checked)
@@ -176,7 +220,7 @@ export default function Checklist() {
     <div className="">
       <header className="bg-white shadow sticky top-0 z-10">
         <div className="max-w-3xl mx-auto px-4 py-3">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-2 flex-wrap">
             <div className="flex items-center gap-3">
               <button
                 onClick={() => navigate(`/trips/${tripId}`)}
@@ -189,13 +233,27 @@ export default function Checklist() {
               </button>
               <h1 className="text-xl font-bold text-camp-900">Checklist</h1>
             </div>
-            <button
-              onClick={() => generateChecklist.mutate()}
-              disabled={generateChecklist.isPending}
-              className="text-sm px-3 py-1 bg-accent-600 hover:bg-accent-700 text-white rounded-lg transition disabled:opacity-50"
-            >
-              {generateChecklist.isPending ? 'Generating...' : 'Regenerate List'}
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleClearChecks}
+                disabled={clearChecks.isPending || checkedInScope.length === 0}
+                title={
+                  checkedInScope.length === 0
+                    ? 'Nothing is checked'
+                    : `Clear ${checkedInScope.length} checkmark${checkedInScope.length === 1 ? '' : 's'}`
+                }
+                className="text-sm px-3 py-1 bg-camp-100 hover:bg-camp-200 text-camp-700 rounded-lg font-medium transition disabled:opacity-50 disabled:hover:bg-camp-100 whitespace-nowrap"
+              >
+                {clearChecks.isPending ? 'Clearing...' : clearLabel}
+              </button>
+              <button
+                onClick={() => generateChecklist.mutate()}
+                disabled={generateChecklist.isPending}
+                className="text-sm px-3 py-1 bg-accent-600 hover:bg-accent-700 text-white rounded-lg transition disabled:opacity-50 whitespace-nowrap"
+              >
+                {generateChecklist.isPending ? 'Generating...' : 'Regenerate List'}
+              </button>
+            </div>
           </div>
 
           {/* Progress */}
