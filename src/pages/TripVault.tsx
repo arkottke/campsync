@@ -349,7 +349,7 @@ export default function TripVault() {
               <input
                 type="number"
                 min={0.1}
-                step="any"
+                step={0.05}
                 value={newItemQty}
                 onChange={(e) => setNewItemQty(Number(e.target.value))}
                 className="w-20 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-camp-500 focus:border-transparent"
