@@ -69,6 +69,14 @@ function ItemRow({
   )
 }
 
+type GroupBy = 'person' | 'pack' | 'person_pack'
+
+const GROUP_BY_OPTIONS: { value: GroupBy; label: string }[] = [
+  { value: 'person', label: 'Person' },
+  { value: 'pack', label: 'Pack' },
+  { value: 'person_pack', label: 'Person + Pack' },
+]
+
 function SectionProgress({ items }: { items: TripVaultItem[] }) {
   const checked = items.filter((i) => i.checked).length
   const total = items.length
@@ -92,9 +100,10 @@ export default function TripVault() {
   const [showPackImport, setShowPackImport] = useState(false)
   const [showAddForm, setShowAddForm] = useState(false)
   const [showUncheckedOnly, setShowUncheckedOnly] = useState(false)
-  const [groupBy, setGroupBy] = useState<'person' | 'pack'>(() =>
-    localStorage.getItem('tripGearGroupBy') === 'pack' ? 'pack' : 'person'
-  )
+  const [groupBy, setGroupBy] = useState<GroupBy>(() => {
+    const saved = localStorage.getItem('tripGearGroupBy')
+    return saved === 'pack' || saved === 'person_pack' ? saved : 'person'
+  })
   const [newItemName, setNewItemName] = useState('')
   const [newItemQty, setNewItemQty] = useState<number>(1)
   const [newItemQtyType, setNewItemQtyType] = useState<'per_day' | 'total'>('total')
@@ -176,8 +185,7 @@ export default function TripVault() {
     return map
   }, [allItems, assignedPeople, showUncheckedOnly])
 
-  const packSections = useMemo(() => {
-    const items = showUncheckedOnly ? allItems.filter((i) => !i.checked) : allItems
+  const splitByPack = useMemo(() => (items: TripVaultItem[]) => {
     const map = new Map<string, TripVaultItem[]>()
     for (const item of items) {
       const key = item.source_pack_id || ''
@@ -192,9 +200,14 @@ export default function TripVault() {
         if (b.key === '') return -1
         return a.title.localeCompare(b.title)
       })
-  }, [allItems, showUncheckedOnly, packNames])
+  }, [packNames])
 
-  const handleGroupBy = (value: 'person' | 'pack') => {
+  const packSections = useMemo(
+    () => splitByPack(showUncheckedOnly ? allItems.filter((i) => !i.checked) : allItems),
+    [splitByPack, allItems, showUncheckedOnly]
+  )
+
+  const handleGroupBy = (value: GroupBy) => {
     setGroupBy(value)
     try { localStorage.setItem('tripGearGroupBy', value) } catch { /* ignore */ }
   }
@@ -287,16 +300,16 @@ export default function TripVault() {
             <div className="flex items-center gap-3 mt-2 text-sm text-camp-600">
               <span>Group by</span>
               <div className="inline-flex rounded-lg overflow-hidden border border-camp-200">
-                {(['person', 'pack'] as const).map((v) => (
+                {GROUP_BY_OPTIONS.map(({ value, label }) => (
                   <button
-                    key={v}
+                    key={value}
                     type="button"
-                    onClick={() => handleGroupBy(v)}
-                    className={`px-3 py-1 capitalize transition ${
-                      groupBy === v ? 'bg-camp-600 text-white' : 'bg-white hover:bg-camp-100'
+                    onClick={() => handleGroupBy(value)}
+                    className={`px-3 py-1 transition ${
+                      groupBy === value ? 'bg-camp-600 text-white' : 'bg-white hover:bg-camp-100'
                     }`}
                   >
-                    {v}
+                    {label}
                   </button>
                 ))}
               </div>
@@ -423,51 +436,51 @@ export default function TripVault() {
               </div>
             ))}
 
-            {/* Group items */}
-            {groupBy === 'person' && groupItems.length > 0 && (
-              <div>
-                <h3 className="text-sm font-semibold text-camp-700 uppercase tracking-wide mb-1">
-                  Group
-                </h3>
-                <SectionProgress items={groupItems} />
-                <div className="bg-white rounded-lg shadow divide-y mt-2">
-                  {groupItems.map((item) => (
-                    <ItemRow
-                      key={item.id}
-                      item={item}
-                      tripDays={tripDays}
-                      onToggle={() => handleToggle(item)}
-                      onDelete={() => handleDeleteItem(item.id)}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Per-person items */}
-            {groupBy === 'person' && assignedPeople.map((person) => {
-              const items = personItemsMap.get(person.id) ?? []
-              if (items.length === 0) return null
-              return (
-                <div key={person.id}>
-                  <h3 className="text-sm font-semibold text-camp-700 uppercase tracking-wide mb-1">
-                    {person.name}
-                  </h3>
-                  <SectionProgress items={items} />
-                  <div className="bg-white rounded-lg shadow divide-y mt-2">
-                    {items.map((item) => (
-                      <ItemRow
-                        key={item.id}
-                        item={item}
-                        tripDays={tripDays}
-                        onToggle={() => handleToggle(item)}
-                        onDelete={() => handleDeleteItem(item.id)}
-                      />
-                    ))}
+            {/* Person sections (optionally split by pack) */}
+            {(groupBy === 'person' || groupBy === 'person_pack') &&
+              [
+                { id: '', name: 'Group', items: groupItems },
+                ...assignedPeople.map((p) => ({
+                  id: p.id,
+                  name: p.name,
+                  items: personItemsMap.get(p.id) ?? [],
+                })),
+              ].map((section) => {
+                if (section.items.length === 0) return null
+                const renderRow = (item: TripVaultItem) => (
+                  <ItemRow
+                    key={item.id}
+                    item={item}
+                    tripDays={tripDays}
+                    onToggle={() => handleToggle(item)}
+                    onDelete={() => handleDeleteItem(item.id)}
+                  />
+                )
+                return (
+                  <div key={section.id || 'group'}>
+                    <h3 className="text-sm font-semibold text-camp-700 uppercase tracking-wide mb-1">
+                      {section.name}
+                    </h3>
+                    <SectionProgress items={section.items} />
+                    {groupBy === 'person_pack' ? (
+                      <div className="bg-white rounded-lg shadow mt-2 divide-y">
+                        {splitByPack(section.items).map((sub) => (
+                          <div key={sub.key || 'none'}>
+                            <div className="px-4 py-1.5 bg-camp-100 text-xs font-semibold text-camp-700 uppercase tracking-wide">
+                              {sub.title}
+                            </div>
+                            <div className="divide-y">{sub.items.map(renderRow)}</div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="bg-white rounded-lg shadow divide-y mt-2">
+                        {section.items.map(renderRow)}
+                      </div>
+                    )}
                   </div>
-                </div>
-              )
-            })}
+                )
+              })}
           </div>
         )}
       </main>
