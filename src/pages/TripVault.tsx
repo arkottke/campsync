@@ -2,21 +2,23 @@ import { useState, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '../context/AuthContext'
-import { useTripVaultItems, useCreateTripVaultItem, useUpdateTripVaultItem, useDeleteTripVaultItem } from '../hooks/useQueries'
+import { useTripVaultItems, useVaultPacks, useCreateTripVaultItem, useUpdateTripVaultItem, useDeleteTripVaultItem } from '../hooks/useQueries'
 import { useRealtimeTripVaultItems } from '../hooks/useRealtime'
 import { PocketBaseService } from '../services/pocketbase'
-import { TripVaultItem, Trip } from '../types'
+import { TripVaultItem, Trip, VaultPack } from '../types'
 import { computeDisplayQuantity, countTripDays } from '../utils/vault'
 import PackImportModal from '../components/PackImportModal'
 
 function ItemRow({
   item,
   tripDays,
+  personName,
   onToggle,
   onDelete,
 }: {
   item: TripVaultItem
   tripDays: number
+  personName?: string
   onToggle: () => void
   onDelete: () => void
 }) {
@@ -40,6 +42,9 @@ function ItemRow({
         <span className={`ml-2 font-medium ${item.checked ? 'line-through text-gray-400' : 'text-camp-900'}`}>
           {displayQty}
         </span>
+        {personName && (
+          <span className="ml-2 text-xs rounded bg-camp-100 text-camp-700 px-1.5 py-0.5">{personName}</span>
+        )}
         {item.quantity_type === 'per_day' && (
           <span className={`ml-1 text-xs ${item.checked ? 'text-gray-400' : 'text-camp-500'}`}>
             ({item.quantity}/day x {tripDays}d)
@@ -87,6 +92,9 @@ export default function TripVault() {
   const [showPackImport, setShowPackImport] = useState(false)
   const [showAddForm, setShowAddForm] = useState(false)
   const [showUncheckedOnly, setShowUncheckedOnly] = useState(false)
+  const [groupBy, setGroupBy] = useState<'person' | 'pack'>(() =>
+    localStorage.getItem('tripGearGroupBy') === 'pack' ? 'pack' : 'person'
+  )
   const [newItemName, setNewItemName] = useState('')
   const [newItemQty, setNewItemQty] = useState<number>(1)
   const [newItemQtyType, setNewItemQtyType] = useState<'per_day' | 'total'>('total')
@@ -102,11 +110,21 @@ export default function TripVault() {
 
   const { data: vaultItemsRaw, isLoading } = useTripVaultItems(tripId, 'gear')
 
+  const { data: vaultPacksRaw } = useVaultPacks(user?.id)
+  const packNames = useMemo(() => {
+    const map = new Map<string, string>()
+    for (const p of (vaultPacksRaw as unknown as VaultPack[]) ?? []) map.set(p.id, p.name)
+    return map
+  }, [vaultPacksRaw])
+
   const createTripVaultItem = useCreateTripVaultItem()
   const updateTripVaultItem = useUpdateTripVaultItem()
   const deleteTripVaultItem = useDeleteTripVaultItem()
 
-  const allItems: TripVaultItem[] = (vaultItemsRaw as unknown as TripVaultItem[]) ?? []
+  const allItems = useMemo(
+    () => (vaultItemsRaw as unknown as TripVaultItem[]) ?? [],
+    [vaultItemsRaw]
+  )
   const tripData = trip as unknown as Trip | undefined
 
   const assignedPeople = useMemo(() => {
@@ -157,6 +175,29 @@ export default function TripVault() {
     }
     return map
   }, [allItems, assignedPeople, showUncheckedOnly])
+
+  const packSections = useMemo(() => {
+    const items = showUncheckedOnly ? allItems.filter((i) => !i.checked) : allItems
+    const map = new Map<string, TripVaultItem[]>()
+    for (const item of items) {
+      const key = item.source_pack_id || ''
+      map.set(key, [...(map.get(key) ?? []), item])
+    }
+    const label = (key: string) =>
+      key === '' ? 'Other items' : packNames.get(key) ?? 'Imported pack'
+    return Array.from(map.entries())
+      .map(([key, list]) => ({ key, title: label(key), items: list }))
+      .sort((a, b) => {
+        if (a.key === '') return 1
+        if (b.key === '') return -1
+        return a.title.localeCompare(b.title)
+      })
+  }, [allItems, showUncheckedOnly, packNames])
+
+  const handleGroupBy = (value: 'person' | 'pack') => {
+    setGroupBy(value)
+    try { localStorage.setItem('tripGearGroupBy', value) } catch { /* ignore */ }
+  }
 
   const checkedCount = allItems.filter((i) => i.checked).length
   const totalCount = allItems.length
@@ -242,6 +283,25 @@ export default function TripVault() {
           )}
 
           {/* Filter */}
+          {totalCount > 0 && (
+            <div className="flex items-center gap-3 mt-2 text-sm text-camp-600">
+              <span>Group by</span>
+              <div className="inline-flex rounded-lg overflow-hidden border border-camp-200">
+                {(['person', 'pack'] as const).map((v) => (
+                  <button
+                    key={v}
+                    type="button"
+                    onClick={() => handleGroupBy(v)}
+                    className={`px-3 py-1 capitalize transition ${
+                      groupBy === v ? 'bg-camp-600 text-white' : 'bg-white hover:bg-camp-100'
+                    }`}
+                  >
+                    {v}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
           {totalCount > 0 && (
             <label className="flex items-center gap-2 mt-2 text-sm text-camp-600">
               <input
@@ -342,8 +402,29 @@ export default function TripVault() {
           </div>
         ) : (
           <div className="space-y-4">
+            {groupBy === 'pack' && packSections.map((section) => (
+              <div key={section.key || 'none'}>
+                <h3 className="text-sm font-semibold text-camp-700 uppercase tracking-wide mb-1">
+                  {section.title}
+                </h3>
+                <SectionProgress items={section.items} />
+                <div className="bg-white rounded-lg shadow divide-y mt-2">
+                  {section.items.map((item) => (
+                    <ItemRow
+                      key={item.id}
+                      item={item}
+                      tripDays={tripDays}
+                      personName={item.person_id}
+                      onToggle={() => handleToggle(item)}
+                      onDelete={() => handleDeleteItem(item.id)}
+                    />
+                  ))}
+                </div>
+              </div>
+            ))}
+
             {/* Group items */}
-            {groupItems.length > 0 && (
+            {groupBy === 'person' && groupItems.length > 0 && (
               <div>
                 <h3 className="text-sm font-semibold text-camp-700 uppercase tracking-wide mb-1">
                   Group
@@ -364,7 +445,7 @@ export default function TripVault() {
             )}
 
             {/* Per-person items */}
-            {assignedPeople.map((person) => {
+            {groupBy === 'person' && assignedPeople.map((person) => {
               const items = personItemsMap.get(person.id) ?? []
               if (items.length === 0) return null
               return (
