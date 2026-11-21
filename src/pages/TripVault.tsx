@@ -102,7 +102,7 @@ export default function TripVault() {
   const [showUncheckedOnly, setShowUncheckedOnly] = useState(false)
   const [groupBy, setGroupBy] = useState<GroupBy>(() => {
     const saved = localStorage.getItem('tripGearGroupBy')
-    return saved === 'pack' || saved === 'person_pack' ? saved : 'person'
+    return saved === 'person' || saved === 'pack' ? saved : 'person_pack'
   })
   const [newItemName, setNewItemName] = useState('')
   const [newItemQty, setNewItemQty] = useState<number>(1)
